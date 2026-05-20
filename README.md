@@ -66,7 +66,47 @@ Mobile:
 - Expo Location
 - React Native Maps
 
+## Docker Quick Start
+
+From the repository root:
+
+```bash
+cp .env.docker.example .env
+docker compose up --build
+```
+
+Default container URLs:
+
+- Web app: `http://localhost:5174`
+- Backend API: `http://localhost:3001`
+- Swagger: `http://localhost:3001/api`
+- Health: `http://localhost:3001/health`
+- PostgreSQL host port: `5434`
+
+The backend container runs Prisma migrations and seeds the demo accounts automatically when `SEED_DATABASE=true`.
+
+If one of those ports is already in use, change `BACKEND_PORT`, `WEB_PORT`, or `POSTGRES_PORT` in `.env` and run Compose again.
+
+### Optional Expo Container
+
+For Expo Go on a physical phone, set your computer LAN IP in `.env` first:
+
+```text
+LAN_IP=192.168.x.x
+EXPO_PUBLIC_API_URL=http://192.168.x.x:3001
+```
+
+Then start the mobile profile:
+
+```bash
+docker compose --profile mobile up --build mobile
+```
+
+Open the Expo URL or QR code from the container logs in Expo Go. Your phone and computer must be on the same Wi-Fi network.
+
 ## Local Setup
+
+Use this path if you prefer running each app directly without Docker.
 
 ### Backend
 
@@ -146,4 +186,3 @@ http://localhost:3000/api
 - `.env` files are intentionally ignored and should not be committed.
 - Firebase and Stream Chat credentials are optional for local development. Without them, the backend logs notifications and returns stub chat behavior.
 - The backend REST API does not define a homepage route at `/`; use `/health` or `/api` for browser checks.
-

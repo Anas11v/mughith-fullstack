@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mughith-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mugeeth_db}
+      POSTGRES_USER: ${POSTGRES_USER:-mugeeth}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mugeeth123}
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ./Backend/mughith-backend
+    container_name: mughith-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mugeeth}:${POSTGRES_PASSWORD:-mugeeth123}@postgres:5432/${POSTGRES_DB:-mugeeth_db}
+      JWT_SECRET: ${JWT_SECRET:-change-this-local-secret}
+      PORT: 3000
+      SEED_DATABASE: ${SEED_DATABASE:-true}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-}
+      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL:-}
+      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY:-}
+      STREAM_API_KEY: ${STREAM_API_KEY:-}
+      STREAM_API_SECRET: ${STREAM_API_SECRET:-}
+    ports:
+      - "${BACKEND_PORT:-3001}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./webApp/mughith-frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+    container_name: mughith-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-5174}:80"
+    depends_on:
+      - backend
+
+  mobile:
+    profiles: ["mobile"]
+    build:
+      context: ./mobileapp/mughith-mobile
+    container_name: mughith-mobile
+    environment:
+      EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost:3001}
+      REACT_NATIVE_PACKAGER_HOSTNAME: ${LAN_IP:-localhost}
+      EXPO_NO_TELEMETRY: 1
+    ports:
+      - "8081:8081"
+      - "19000:19000"
+      - "19001:19001"
+      - "19002:19002"
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres-data:
