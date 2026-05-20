@@ -1,0 +1,37 @@
+sequenceDiagram
+  autonumber
+  participant D as Dispatcher
+  participant Ctl as CasesController
+  participant S as CasesService
+  participant G as GeocodingService
+  participant N as Nominatim (OSM)
+  participant DB as Prisma
+  participant Dx as DispatchService
+  participant H as Haversine
+  participant NS as NotificationsService
+  participant FS as FirebaseService
+
+  D->>Ctl: POST /cases { address, severity, radiusKm, lat?, lng? }
+  Ctl->>S: create(userId, dto)
+  alt no lat/lng
+    S->>G: geocode(address)
+    G->>N: GET /search?q=address
+    N-->>G: { lat, lon }
+    G-->>S: LatLng
+  end
+  S->>DB: case.create({ OPEN, expiresAt: +5min })
+  DB-->>S: case
+  S->>Dx: findAndNotify(case)
+  Dx->>DB: findMany donators(available, verified, !busy, lat/lng)
+  DB-->>Dx: candidates
+  loop per candidate
+    Dx->>H: haversineDistanceKm(case, donator)
+    H-->>Dx: km
+  end
+  Dx->>Dx: filter ≤ radius, sort asc, top N
+  loop top N
+    Dx->>NS: sendPush(CASE_ALERT)
+    NS->>DB: notification.create
+    NS->>FS: sendToDevice
+  end
+  Ctl-->>D: 201 { case }

@@ -1,0 +1,23 @@
+sequenceDiagram
+  autonumber
+  participant W as Dispatcher Web
+  participant R as RolesGuard
+  participant Ctl as DispatchController
+  participant S as DispatchService
+  participant DB as Prisma
+  participant H as Haversine
+
+  W->>Ctl: GET /dispatch/:caseId/nearby
+  Ctl->>R: require DISPATCHER/ADMIN
+  R-->>Ctl: ok
+  Ctl->>S: getNearbyDonators(caseId)
+  S->>DB: case.findUnique → lat, lng, radiusKm
+  DB-->>S: case
+  S->>DB: user.findMany (indexed: role, available, verified, !busy, lat/lng)
+  DB-->>S: candidates
+  loop per candidate
+    S->>H: haversineDistanceKm
+    H-->>S: km
+  end
+  S->>S: filter ≤ radius, sort asc
+  S-->>W: 200 [ {donator, distanceKm, etaMinutes} ]

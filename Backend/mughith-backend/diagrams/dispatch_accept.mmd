@@ -1,0 +1,29 @@
+sequenceDiagram
+  autonumber
+  participant A as Donator A
+  participant B as Donator B
+  participant Ctl as DispatchController
+  participant S as DispatchService
+  participant DB as Prisma
+  participant NS as NotificationsService
+  participant SC as StreamChatService
+
+  par race
+    A->>Ctl: POST /dispatch/:id/accept
+    B->>Ctl: POST /dispatch/:id/accept
+  end
+  Ctl->>S: acceptCase(caseId, donatorId)
+  S->>DB: user.findUnique — check !isBusy
+  DB-->>S: donator
+  S->>DB: $transaction
+  DB->>DB: updateMany({id, status:OPEN} → ASSIGNED)
+  alt count = 1 (winner)
+    DB->>DB: user.update(isBusy=true)
+    S->>NS: cancelForCase (others)
+    NS->>DB: notification.create (CASE_CANCELLED) per donator
+    S->>NS: sendPush(dispatcher, CASE_ASSIGNED)
+    S->>SC: createChannelForCase(caseId, disp, donator)
+    S-->>A: 201 ASSIGNED
+  else count = 0 (loser)
+    S-->>B: 409 Conflict
+  end

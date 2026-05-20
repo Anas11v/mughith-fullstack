@@ -1,0 +1,20 @@
+sequenceDiagram
+  autonumber
+  participant M as Mobile App
+  participant Ctl as UsersController
+  participant V as ValidationPipe
+  participant G as JwtGuard
+  participant S as UsersService
+  participant DB as Prisma
+
+  M->>Ctl: PATCH /users/profile { latitude, longitude }
+  Ctl->>G: authenticate
+  G-->>Ctl: request.user = { sub, role }
+  Ctl->>V: validate UpdateProfileDto
+  V-->>Ctl: ok
+  Ctl->>S: updateProfile(userId, dto)
+  S->>DB: findUnique({ id }) — ensure exists
+  DB-->>S: user
+  S->>DB: user.update({ latitude, longitude })
+  DB-->>S: updated
+  S-->>M: 200 { user with new location }

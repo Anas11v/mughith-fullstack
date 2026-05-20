@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Mughith",
+    "slug": "mughith-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "mughith",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mughith.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Mughith uses your location to dispatch you to nearby emergencies and share your live position with the operator.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Mughith shares your live location with dispatch while you respond to a case."
+      }
+    },
+    "android": {
+      "package": "com.mughith.mobile",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Mughith shares your live location with dispatch while you respond to a case."
+        }
+      ],
+      "expo-localization"
+    ],
+    "extra": {
+      "apiUrl": "http://localhost:3000"
+    }
+  }
+}

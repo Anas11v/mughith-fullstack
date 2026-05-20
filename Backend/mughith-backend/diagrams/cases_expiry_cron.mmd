@@ -1,0 +1,13 @@
+sequenceDiagram
+  autonumber
+  participant T as @Cron EVERY_30s
+  participant S as CasesService
+  participant DB as Prisma
+  participant L as Logger
+
+  T->>S: expireOldOpenCases()
+  S->>DB: updateMany({ status:OPEN, expiresAt < now }, { status:EXPIRED })
+  DB-->>S: { count }
+  alt count > 0
+    S->>L: log "Expired N OPEN cases"
+  end

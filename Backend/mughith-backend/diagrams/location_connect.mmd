@@ -1,0 +1,22 @@
+sequenceDiagram
+  autonumber
+  participant M as Donator App
+  participant LG as LocationGateway (/location)
+  participant J as JwtService
+  participant Map as userSockets Map
+  participant SIO as Socket.io Namespace
+
+  M->>LG: connect /location { auth: { token } }
+  LG->>J: verifyAsync(token)
+  alt invalid token
+    J-->>LG: error
+    LG-->>M: disconnect(true)
+  else valid
+    J-->>LG: { sub, role }
+    LG->>Map: existing = get(sub)
+    alt existing socket
+      LG->>SIO: in(oldId).disconnectSockets(true)
+    end
+    LG->>Map: set(sub, client.id)
+    LG-->>M: connected
+  end

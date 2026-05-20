@@ -1,0 +1,12 @@
+sequenceDiagram
+  autonumber
+  participant A as Peer A
+  participant VG as VoipGateway
+  participant NS as Socket.io
+  participant B as Peer B
+
+  A->>VG: emit call:end { caseId, targetUserId: B }
+  VG->>NS: to(B-socket).emit(call:ended, { caseId, fromId: A })
+  NS-->>B: call:ended
+  VG-->>A: ack { ok:true }
+  Note over A,B: Both sides close RTCPeerConnection locally

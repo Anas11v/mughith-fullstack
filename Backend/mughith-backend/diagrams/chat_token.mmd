@@ -1,0 +1,20 @@
+sequenceDiagram
+  autonumber
+  participant M as Mobile/Web App
+  participant J as JwtGuard
+  participant Ctl as ChatController
+  participant S as ChatService
+  participant SC as StreamChatService
+
+  M->>Ctl: GET /chat/token
+  Ctl->>J: verify token → userId
+  J-->>Ctl: ok
+  Ctl->>S: generateToken(userId)
+  S->>SC: generateToken(userId)
+  alt credentials set
+    SC->>SC: client.createToken(userId)
+  else stub
+    SC->>SC: return stub-token-<userId>
+  end
+  SC-->>S: token
+  S-->>M: 200 { token }

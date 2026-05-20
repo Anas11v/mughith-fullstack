@@ -1,0 +1,16 @@
+sequenceDiagram
+  autonumber
+  participant LB as Load Balancer
+  participant Ctl as HealthController
+  participant HC as HealthCheckService
+  participant PI as PrismaHealthIndicator
+  participant DB as PostgreSQL
+
+  LB->>Ctl: GET /health
+  Ctl->>HC: check([prismaIndicator.pingCheck])
+  HC->>PI: ping
+  PI->>DB: SELECT 1
+  DB-->>PI: ok
+  PI-->>HC: up
+  HC-->>Ctl: { database: up }
+  Ctl-->>LB: 200 { status: ok }

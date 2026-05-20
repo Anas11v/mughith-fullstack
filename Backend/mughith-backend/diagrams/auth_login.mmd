@@ -1,0 +1,23 @@
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant Ctl as AuthController
+  participant S as AuthService
+  participant DB as Prisma
+  participant B as bcrypt
+  participant J as JwtService
+
+  C->>Ctl: POST /auth/login
+  Ctl->>S: login(dto)
+  S->>DB: findUnique({ email })
+  DB-->>S: user or null
+  S->>B: compare(password, user.password)
+  alt invalid
+    B-->>S: false
+    S-->>C: 401 Unauthorized
+  else valid
+    B-->>S: true
+    S->>J: sign({ sub, role }) 24h
+    J-->>S: accessToken
+    S-->>C: 200 { user, accessToken }
+  end

@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ──────────────────────────────────────────
+
+enum Role {
+  DISPATCHER
+  DONATOR
+  AMBULANCE_CREW
+  ADMIN
+}
+
+enum CaseStatus {
+  OPEN
+  ASSIGNED
+  ON_SCENE
+  CLOSED
+  EXPIRED
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MODERATE
+  LOW
+}
+
+enum NotificationType {
+  CASE_ALERT
+  CASE_ASSIGNED
+  CASE_CANCELLED
+  CASE_CLOSED
+  GENERAL
+}
+
+// ─── MODELS ─────────────────────────────────────────
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  password        String
+  name            String
+  phone           String?
+  role            Role
+  certification   String?
+  certExpiry      DateTime?
+  isVerified      Boolean   @default(false)
+  isAvailable     Boolean   @default(false)
+  isBusy          Boolean   @default(false)
+  latitude        Float?
+  longitude       Float?
+  fcmToken        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  createdCases    Case[]         @relation("CaseCreator")
+  assignedCases   Case[]         @relation("CaseAssignee")
+  notifications   Notification[]
+
+  @@index([role, isAvailable, isBusy])
+  @@map("users")
+}
+
+model Case {
+  id              String     @id @default(uuid())
+  address         String
+  latitude        Float
+  longitude       Float
+  severity        Severity
+  status          CaseStatus @default(OPEN)
+  notes           String?
+  outcome         String?
+  radiusKm        Float      @default(5.0)
+  expiresAt       DateTime?
+
+  ambulancePlate  String?
+  ambulanceEta    String?
+  ambulanceCrew   String?
+  panicTriggered  Boolean    @default(false)
+
+  createdById     String
+  createdBy       User       @relation("CaseCreator", fields: [createdById], references: [id])
+
+  assignedToId    String?
+  assignedTo      User?      @relation("CaseAssignee", fields: [assignedToId], references: [id])
+
+  notifications   Notification[]
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  closedAt        DateTime?
+
+  @@index([status])
+  @@index([status, expiresAt])
+  @@index([assignedToId])
+  @@map("cases")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  message   String
+  read      Boolean          @default(false)
+
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+
+  caseId    String?
+  case      Case?            @relation(fields: [caseId], references: [id])
+
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}

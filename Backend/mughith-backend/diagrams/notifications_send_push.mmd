@@ -1,0 +1,22 @@
+sequenceDiagram
+  autonumber
+  participant DS as DispatchService
+  participant NS as NotificationsService
+  participant DB as Prisma
+  participant FS as FirebaseService
+  participant FCM as Firebase Cloud Messaging
+
+  DS->>NS: sendPush({ userId, caseId, type, message })
+  NS->>DB: notification.create
+  DB-->>NS: notification
+  NS->>DB: user.findUnique → fcmToken
+  DB-->>NS: user { fcmToken }
+  alt fcmToken exists
+    NS->>FS: sendToDevice(token, payload)
+    alt credentials set
+      FS->>FCM: messaging().send()
+      FCM-->>FS: ok
+    else stub mode
+      FS->>FS: log only
+    end
+  end

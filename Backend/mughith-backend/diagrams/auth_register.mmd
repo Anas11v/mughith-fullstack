@@ -1,0 +1,28 @@
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant Ctl as AuthController
+  participant V as ValidationPipe
+  participant S as AuthService
+  participant DB as Prisma (users)
+  participant B as bcrypt
+  participant J as JwtService
+
+  C->>Ctl: POST /auth/register
+  Ctl->>V: validate RegisterDto
+  V-->>Ctl: ok
+  Ctl->>S: register(dto)
+  S->>DB: findUnique({ email })
+  alt email exists
+    DB-->>S: user
+    S-->>C: 409 Conflict
+  else new email
+    DB-->>S: null
+    S->>B: hash(password, 10)
+    B-->>S: hash
+    S->>DB: user.create({...hash})
+    DB-->>S: user
+    S->>J: sign({ sub, role })
+    J-->>S: accessToken
+    S-->>C: 201 { user, accessToken }
+  end

@@ -1,0 +1,22 @@
+sequenceDiagram
+  autonumber
+  participant W as Dispatcher Web
+  participant M as Donator App
+  participant LG as LocationGateway
+  participant DB as Prisma
+  participant H as Haversine
+  participant SIO as Socket.io Room case:<id>
+
+  W->>LG: emit location:subscribe { caseId }
+  LG->>SIO: client.join(case:<id>)
+  LG-->>W: { ok:true }
+
+  M->>LG: emit location:update { caseId, lat, lng }
+  LG->>DB: user.update({ lat, lng })
+  LG->>LG: lastSeen.set(userId, now)
+  LG->>DB: case.findUnique → case coords
+  LG->>H: haversineDistanceKm(donator, case)
+  H-->>LG: distanceKm
+  LG->>LG: estimateEtaMinutes
+  LG->>SIO: broadcast location:update { donatorId, distance, eta }
+  SIO-->>W: location:update payload

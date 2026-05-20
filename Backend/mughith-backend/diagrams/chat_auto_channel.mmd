@@ -1,0 +1,20 @@
+sequenceDiagram
+  autonumber
+  participant D as Donator
+  participant DS as DispatchService
+  participant DB as Prisma
+  participant SC as StreamChatService
+  participant API as Stream Chat API
+
+  D->>DS: acceptCase (see dispatch_accept)
+  DS->>DB: $transaction (status ASSIGNED, isBusy=true)
+  DS->>SC: createChannelForCase(caseId, dispId, donatorId)
+  alt credentials set
+    SC->>API: upsertUsers
+    SC->>API: channel.create
+    API-->>SC: ok
+  else stub
+    SC->>SC: log + return stub
+  end
+  SC-->>DS: { channelId, channelType, members }
+  DS-->>D: 201 ASSIGNED (channel silently ready)

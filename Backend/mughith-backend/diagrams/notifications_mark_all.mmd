@@ -1,0 +1,15 @@
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant G as JwtGuard
+  participant Ctl as NotificationsController
+  participant S as NotificationsService
+  participant DB as Prisma
+
+  C->>Ctl: PATCH /notifications/read-all
+  Ctl->>G: verify token
+  G-->>Ctl: userId = sub
+  Ctl->>S: markAllRead(userId)
+  S->>DB: updateMany({ userId, read:false }, { read:true })
+  DB-->>S: { count: N }
+  S-->>C: 200 { count: N }

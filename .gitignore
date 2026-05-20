@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.expo/
+
+# Local environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editors and OS files
+.DS_Store
+Thumbs.db
+__MACOSX/
+._*
+.idea/
+.vscode/
+
+# Generated local helpers
+webApp/mughith-frontend/public/open-mobile.html

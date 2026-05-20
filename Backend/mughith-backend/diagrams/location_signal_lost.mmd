@@ -1,0 +1,15 @@
+sequenceDiagram
+  autonumber
+  participant I as @Interval(10s)
+  participant LG as LocationGateway
+  participant Map as lastSeen Map
+  participant SIO as Socket.io
+
+  I->>LG: checkSignalLost()
+  LG->>Map: iterate entries
+  loop per userId,lastAt
+    alt now - lastAt > 30s
+      LG->>SIO: server.emit(location:signal-lost, {donatorId, lastSeenAt})
+      LG->>Map: delete(userId)
+    end
+  end

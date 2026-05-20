@@ -1,0 +1,30 @@
+sequenceDiagram
+  autonumber
+  actor D as Dispatcher
+  actor Donor as Donator
+  participant API as Mugeeth API
+  participant WS as /location WS
+  participant FCM as FCM
+  participant SC as Stream Chat
+
+  D->>API: POST /cases (status → OPEN)
+  API->>FCM: CASE_ALERT to eligible donators
+  API-->>Donor: push alert
+  Donor->>API: POST /dispatch/:id/accept
+  API->>API: $transaction ASSIGNED + isBusy=true
+  API->>SC: create channel (auto)
+  API->>FCM: CASE_CANCELLED to other donators
+  API->>FCM: CASE_ASSIGNED to dispatcher
+  API-->>Donor: 201 ASSIGNED
+  Donor->>WS: connect /location
+  loop every ~5s
+    Donor->>WS: location:update
+    WS-->>D: location:update broadcast
+  end
+  D->>API: PATCH /cases/:id/ambulance-info
+  API->>FCM: info update to donator
+  Donor->>API: PATCH /cases/:id/status ON_SCENE
+  D->>API: PATCH /cases/:id/close { outcome }
+  API->>API: CLOSED + isBusy=false
+  API->>FCM: CASE_CLOSED to donator
+  Donor->>API: GET /cases/history (includes case)

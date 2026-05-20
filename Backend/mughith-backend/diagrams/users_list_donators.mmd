@@ -1,0 +1,13 @@
+sequenceDiagram
+  autonumber
+  participant W as Dispatcher Web
+  participant Ctl as UsersController
+  participant S as UsersService
+  participant DB as Prisma
+
+  W->>Ctl: GET /users/donators?page=1&limit=20&available=true
+  Ctl->>S: findDonators({ page, limit, available })
+  S->>DB: $transaction [findMany(skip, take), count]
+  DB-->>S: [users, total]
+  S->>S: buildPaginated(data, total, page, limit)
+  S-->>W: 200 { data, meta:{page,limit,total,totalPages} }

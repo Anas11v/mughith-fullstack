@@ -1,0 +1,22 @@
+sequenceDiagram
+  autonumber
+  participant D as Dispatcher
+  participant Ctl as CasesController
+  participant S as CasesService
+  participant DB as Prisma
+  participant NS as NotificationsService
+
+  D->>Ctl: PATCH /cases/:id/close { outcome }
+  Ctl->>S: close(caseId, dto)
+  S->>DB: case.findUnique
+  DB-->>S: case
+  alt already CLOSED
+    S-->>D: 400 Bad Request
+  else
+    S->>DB: $transaction begin
+    DB->>DB: case.update({ CLOSED, closedAt, outcome })
+    DB->>DB: user.update(assignedTo, { isBusy:false })
+    S->>DB: $transaction commit
+    S->>NS: sendPush(CASE_CLOSED to donator)
+    S-->>D: 200 { closed case }
+  end

@@ -1,0 +1,23 @@
+sequenceDiagram
+  autonumber
+  participant D as Dispatcher
+  participant R as RolesGuard
+  participant Ctl as CasesController
+  participant S as CasesService
+  participant DB as Prisma
+  participant NS as NotificationsService
+
+  D->>Ctl: PATCH /cases/:id/ambulance-info { plate, eta, crew }
+  Ctl->>R: require DISPATCHER/AMBULANCE_CREW/ADMIN
+  R-->>Ctl: ok
+  Ctl->>S: updateAmbulanceInfo(id, dto)
+  S->>DB: case.findUnique
+  DB-->>S: case
+  alt status NOT in {ASSIGNED, ON_SCENE}
+    S-->>D: 400 Bad Request
+  else
+    S->>DB: case.update({ ambulancePlate, eta, crew })
+    DB-->>S: updated
+    S->>NS: sendPush(donator, GENERAL, updated info)
+    S-->>D: 200 { case }
+  end

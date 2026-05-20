@@ -1,0 +1,24 @@
+sequenceDiagram
+  autonumber
+  participant A as Ambulance Crew App
+  participant R as RolesGuard (AMBULANCE_CREW only)
+  participant Ctl as CasesController
+  participant S as CasesService
+  participant DB as Prisma
+  participant NS as NotificationsService
+  participant L as Logger
+
+  A->>Ctl: PATCH /cases/:id/panic
+  Ctl->>R: require AMBULANCE_CREW
+  alt other role
+    R-->>A: 403 Forbidden
+  else allowed
+    R-->>Ctl: ok
+    Ctl->>S: triggerPanic(caseId, userId)
+    S->>DB: case.findUnique → createdById
+    S->>DB: case.update({ panicTriggered:true })
+    DB-->>S: updated
+    S->>NS: sendPush(dispatcher, GENERAL, "panic")
+    S->>L: warn "Panic triggered"
+    S-->>A: 200 { case }
+  end

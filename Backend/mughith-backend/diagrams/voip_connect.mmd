@@ -1,0 +1,22 @@
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant VG as VoipGateway (/voip)
+  participant J as JwtService
+  participant Map as userSockets Map
+  participant NS as Socket.io Namespace
+
+  C->>VG: connect /voip { auth: { token } }
+  VG->>J: verifyAsync(token)
+  alt invalid
+    J-->>VG: error
+    VG-->>C: disconnect(true)
+  else valid
+    J-->>VG: { sub, role }
+    VG->>Map: existing = get(sub)
+    alt existing socket
+      VG->>NS: in(oldId).disconnectSockets(true)
+    end
+    VG->>Map: set(sub, client.id)
+    VG-->>C: connected
+  end

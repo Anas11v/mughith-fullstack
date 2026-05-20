@@ -1,0 +1,22 @@
+sequenceDiagram
+  autonumber
+  participant M as Donator App
+  participant J as JwtGuard
+  participant R as RolesGuard
+  participant Ctl as UsersController
+  participant S as UsersService
+  participant DB as Prisma
+
+  M->>Ctl: PATCH /users/availability { isAvailable: true }
+  Ctl->>J: verify token
+  J-->>Ctl: user { sub, role }
+  Ctl->>R: @Roles(DONATOR)
+  alt role != DONATOR
+    R-->>M: 403 Forbidden
+  else role = DONATOR
+    R-->>Ctl: ok
+    Ctl->>S: toggleAvailability(userId, true)
+    S->>DB: user.update({ isAvailable: true })
+    DB-->>S: updated
+    S-->>M: 200 { isAvailable: true }
+  end

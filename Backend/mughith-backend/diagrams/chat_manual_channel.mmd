@@ -1,0 +1,19 @@
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant Ctl as ChatController
+  participant S as ChatService
+  participant DB as Prisma
+  participant SC as StreamChatService
+
+  C->>Ctl: POST /chat/case/:id/channel
+  Ctl->>S: createChannelForCase(caseId)
+  S->>DB: case.findUnique
+  DB-->>S: case
+  alt no donator assigned or finished
+    S-->>C: 400 Bad Request
+  else
+    S->>SC: createChannelForCase
+    SC-->>S: { channelId, channelType, members }
+    S-->>C: 201 { channel info }
+  end

@@ -1,0 +1,18 @@
+sequenceDiagram
+  autonumber
+  participant A as Caller App
+  participant VG as VoipGateway
+  participant Map as userSockets Map
+  participant NS as Socket.io
+  participant B as Callee App
+
+  A->>VG: emit call:offer { caseId, targetUserId, sdpOffer }
+  VG->>VG: verify client.data.userId
+  VG->>Map: targetSocketId = get(targetUserId)
+  alt target offline
+    VG-->>A: ack { ok:false, error:"offline" }
+  else online
+    VG->>NS: to(targetSocketId).emit(call:incoming)
+    NS-->>B: call:incoming { caseId, callerId, sdpOffer }
+    VG-->>A: ack { ok:true }
+  end

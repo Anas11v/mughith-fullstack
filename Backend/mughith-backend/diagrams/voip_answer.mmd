@@ -1,0 +1,18 @@
+sequenceDiagram
+  autonumber
+  participant A as Caller
+  participant VG as VoipGateway
+  participant Map as userSockets Map
+  participant NS as Socket.io
+  participant B as Callee
+
+  B->>VG: emit call:answer { caseId, targetUserId, sdpAnswer }
+  VG->>Map: get(targetUserId) → callerSocketId
+  alt caller offline
+    VG-->>B: ack { ok:false, error:"offline" }
+  else online
+    VG->>NS: to(callerSocketId).emit(call:answered)
+    NS-->>A: call:answered { caseId, calleeId, sdpAnswer }
+    VG-->>B: ack { ok:true }
+  end
+  Note over A,B: WebRTC peer connection now established\naudio streams peer-to-peer (not via server)

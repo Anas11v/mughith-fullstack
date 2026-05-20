@@ -1,0 +1,17 @@
+sequenceDiagram
+  autonumber
+  participant A as Peer A
+  participant VG as VoipGateway
+  participant NS as Socket.io
+  participant B as Peer B
+
+  par ICE negotiation (bidirectional)
+    A->>VG: call:ice-candidate { targetUserId: B, candidate }
+    VG->>NS: to(B-socket).emit(call:ice-candidate, { fromId: A, candidate })
+    NS-->>B: call:ice-candidate
+  and
+    B->>VG: call:ice-candidate { targetUserId: A, candidate }
+    VG->>NS: to(A-socket).emit(call:ice-candidate, { fromId: B, candidate })
+    NS-->>A: call:ice-candidate
+  end
+  Note over A,B: Both peers exchange ICE until best network path is found

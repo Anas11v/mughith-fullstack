@@ -1,0 +1,18 @@
+sequenceDiagram
+  autonumber
+  participant C as Client
+  participant G as JwtGuard
+  participant J as JwtService
+  participant Ctl as AuthController
+  participant S as AuthService
+  participant DB as Prisma
+
+  C->>Ctl: GET /auth/me (Bearer token)
+  Ctl->>G: canActivate()
+  G->>J: verifyAsync(token)
+  J-->>G: { sub, role }
+  G->>Ctl: request.user = payload
+  Ctl->>S: getProfile(userId)
+  S->>DB: findUnique({ id })
+  DB-->>S: user
+  S-->>C: 200 { user without password }
